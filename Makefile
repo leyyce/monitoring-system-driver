@@ -1,4 +1,4 @@
-obj-m += monitoring_i2c.o
+obj-m += monitoring_system.o
 
 all: module dt
 	echo Builded Device Tree Overlay and kernel module

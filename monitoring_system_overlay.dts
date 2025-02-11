@@ -1,17 +1,14 @@
 /dts-v1/;
 /plugin/;
-
 / {
     fragment@0 {
-        target = <&i2c1>;
+        target-path = "/";
         __overlay__ {
-            #address-cells = <1>;
-            #size-cells = <0>;
-            
-            monitoring_system: monitoring_system@10 {
+            monitoring-system {
                 compatible = "embedded_linux,monitoring_system";
-                reg = <0x10>;
                 status = "okay";
+                msd-gpio = <&gpio 82 0>;
+                msc-gpio = <&gpio 68 0>;
             };
         };
     };
