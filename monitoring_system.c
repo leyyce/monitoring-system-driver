@@ -8,7 +8,6 @@
 #include <linux/crc32.h>
 #include <linux/uaccess.h>
 #include <linux/proc_fs.h>
-
 #include <linux/delay.h>
 
 #define MONITORING_SYS_ADDR 0x10
@@ -19,9 +18,10 @@ MODULE_AUTHOR("Leya Wehner & Julian Frank");
 MODULE_DESCRIPTION("Monitoring System I2C Driver");
 MODULE_LICENSE("GPL");
 
+/* CRC-32/JAMCRC */
 static uint32_t calculate_crc(const uint8_t *data, size_t len)
 {
-    return crc32(0, data, len);
+    return crc32(0xFFFFFFFF, data, len);
 }
 
 // Probe function - called when the device is detected
@@ -73,6 +73,7 @@ static ssize_t monitoring_sys_write(struct file *File, const char __user *user_b
     }
 
     crc = calculate_crc(kernel_buffer, count);
+    pr_info("monitoring-sys: crc=0x%08X\n", crc);
     kernel_buffer[count] = crc & 0xFF;
     kernel_buffer[count + 1] = (crc >> 8) & 0xFF;
     kernel_buffer[count + 2] = (crc >> 16) & 0xFF;
@@ -83,7 +84,7 @@ static ssize_t monitoring_sys_write(struct file *File, const char __user *user_b
     pr_info("monitoring-sys: total_len=%zu\n", total_len);
 
     for (int i = 0; i < total_len; i++) {
-        pr_info("monitoring-sys: kernel_buffer[%d] = %u\n", i, kernel_buffer[i]);
+        pr_info("monitoring-sys: kernel_buffer[%d] = 0x%02X\n", i, kernel_buffer[i]);
         for (int j = 0; j < 8; j++) {
             pr_info("monitoring-sys: kernel_buffer[%d] bit [%d] = %u\n", i, j, (kernel_buffer[i] >> j) & 1);
             gpiod_set_value(msd, (kernel_buffer[i] >> j) & 1);
