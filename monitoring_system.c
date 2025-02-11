@@ -11,7 +11,7 @@
 #include <linux/delay.h>
 
 #define MONITORING_SYS_ADDR 0x10
-#define MAX_BUFFER_SIZE 773
+#define MAX_BUFFER_SIZE 773 // 1 byte address + (256 * 1 byte value id) + (256 * 2 byte value) + 4 byte crc = 773 bytes
 
 /* Meta Information */
 MODULE_AUTHOR("Leya Wehner & Julian Frank");
