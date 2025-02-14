@@ -193,9 +193,10 @@ static int __init monitoring_system_init(void) {
 	return 0;
 }
 
-/**
- * @brief This function is called, when the module is removed from the kernel
- */
+/*
+    Diese Funktion wird aufgerufen, wenn das Modul aus dem Kernel entladen wird,
+    und meldet den Treiber ab.
+*/
 static void __exit monitoring_system_exit(void) {
 	printk("monitoring sys: Unloading the driver...\n");
 	platform_driver_unregister(&monitoring_sys_driver);
