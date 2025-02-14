@@ -37,7 +37,6 @@ static const struct of_device_id monitoring_sys_of_match[] = {
 MODULE_DEVICE_TABLE(of, monitoring_sys_of_match);
 
 // GPIO Driver Structure
-// TODO: Maybe remove .id_table
 static struct platform_driver monitoring_sys_driver = {
     .driver = {
         .name = "monitoring-system",
@@ -88,11 +87,11 @@ static ssize_t monitoring_sys_write(struct file *File, const char __user *user_b
         for (int j = 0; j < 8; j++) {
             pr_info("monitoring-sys: kernel_buffer[%d] bit [%d] = %u\n", i, j, (kernel_buffer[i] >> j) & 1);
             gpiod_set_value(msd, (kernel_buffer[i] >> j) & 1);
-            usleep_range(100, 110);
+            usleep_range(100, 100);
             gpiod_set_value(msc, 1);
-            usleep_range(200, 220);
+            usleep_range(200, 200);
             gpiod_set_value(msc, 0);
-            usleep_range(100, 110);
+            usleep_range(100, 100);
         }
     }
     gpiod_set_value(msd, 0);
