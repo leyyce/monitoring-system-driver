@@ -1,7 +1,10 @@
 /*
-monitoring_system.c implementiert einen Treiber für unser Monitoring System und dient als Schnittstelle zwischen unserem Userspace-Service und dem Kernel.
-
+monitoring_system.c
+Implementiert einen Treiber für unser Monitoring System und dient als Schnittstelle zwischen unserem Userspace-Service und dem Kernel.
 Der vom sysmond Service erhaltene Datenframe wird im Kernel mit einem CRC versehen und per Bitbashing über die GPIOs übertragen.
+
+Alle Funktionen wurden von uns beiden (Leya Wehner und Julian Frank) in Kollaboration geschreiben.
+Die Kommentare zur Funktionsbeschreibung befinden sich über der jeweiligen Funktion.
 */
 
 
@@ -18,7 +21,7 @@ Der vom sysmond Service erhaltene Datenframe wird im Kernel mit einem CRC verseh
 #include <linux/delay.h>
 
 #define MONITORING_SYS_ADDR 0x10
-#define MAX_BUFFER_SIZE 773 // 1 byte address + (256 * 1 byte value id) + (256 * 2 byte value) + 4 byte crc = 773 bytes
+#define MAX_BUFFER_SIZE 773 // 1 Byte Adresse + (256 * 1 Byte Wert ID) + (256 * 2 Byte Wert) + 4 Byte CRC = 773 Bytes
 
 /* Meta Information */
 MODULE_AUTHOR("Leya Wehner & Julian Frank");
@@ -31,19 +34,19 @@ static uint32_t calculate_crc(const uint8_t *data, size_t len)
     return crc32(0xFFFFFFFF, data, len);
 }
 
-// Probe function - called when the device is detected
+// Probe function - Wird aufgerufen, wenn ein Gerät erkannt wird
 static int monitoring_sys_probe(struct platform_device *pdev);
 
-// Remove function - called when the device is removed
+// Remove function - Wird aufgerufen wenn ein Gerät entfernt wird
 static int monitoring_sys_remove(struct platform_device *pdev);
 
-// Device Tree Match Table
+// Device Tree Match Tabelle
 static const struct of_device_id monitoring_sys_of_match[] = {
     {.compatible = "embedded_linux,monitoring_system"},
     {/* sentinel */}};
 MODULE_DEVICE_TABLE(of, monitoring_sys_of_match);
 
-// GPIO Driver Structure
+// GPIO Treiberstruktur
 static struct platform_driver monitoring_sys_driver = {
     .driver = {
         .name = "monitoring-system",
@@ -53,12 +56,18 @@ static struct platform_driver monitoring_sys_driver = {
     .remove = monitoring_sys_remove,
 };
 
-/* GPIO variables */
+// GPIO-Variablen
 struct gpio_desc *msd = NULL;
 struct gpio_desc *msc = NULL;
 
 static struct proc_dir_entry *proc_file = NULL;
 
+
+/*
+    Funktion die aufgerufen wird, wenn in die procfs Datei unter /proc/monitoring-system geschrieben wird. 
+    Die in die Datei geschriebenen Daten werden über den Parameter user_buffer in die Funktion übergeben, und
+    anschließend von dieser mit einer 32-bit CRC Prüfsumme versehen und über die GPIO-Pins übertragen.
+*/
 static ssize_t monitoring_sys_write(struct file *File, const char __user *user_buffer, size_t count, loff_t *offs) {
     pr_info("monitoring-sys: In the monitoring_sys_write function. count: %zu\n", count);
     uint8_t kernel_buffer[MAX_BUFFER_SIZE];
@@ -109,7 +118,7 @@ static struct proc_ops fops = {
     .proc_write = monitoring_sys_write,
 };
 
-// Probe function - called when the device is detected
+// Probe function - Wird aufgerufen, wenn ein Gerät erkannt wird
 static int monitoring_sys_probe(struct platform_device *pdev)
 {
     struct device *dev = &pdev->dev;
@@ -127,7 +136,7 @@ static int monitoring_sys_probe(struct platform_device *pdev)
         return -EINVAL;
     }
 
-    /* Init GPIO */
+    //Initialisierung der GPIOs
     msd = gpiod_get(dev, "msd", GPIOD_OUT_LOW);
     if (IS_ERR(msd))
     {
@@ -142,6 +151,7 @@ static int monitoring_sys_probe(struct platform_device *pdev)
         return PTR_ERR(msc);
     }
 
+    //Erzeugung des procfs-files, maßgeblich für die Kommunikation zwischen Userspace und Kernel
     proc_file = proc_create("monitoring-system", 0666, NULL, &fops);
     if (proc_file == NULL)
     {
@@ -154,7 +164,10 @@ static int monitoring_sys_probe(struct platform_device *pdev)
     return 0;
 };
 
-// Remove function - called when the device is removed
+/*
+    Remove function - Wird aufgerufen wenn ein Gerät entfernt wird.
+    Sie gibt die verwendeten GPIOs frei, und löscht das procfs File
+*/
 static int monitoring_sys_remove(struct platform_device *pdev)
 {
     pr_info("monitoring-sys: Device removed\n");
@@ -167,9 +180,10 @@ static int monitoring_sys_remove(struct platform_device *pdev)
     return 0;
 };
 
-/**
- * @brief This function is called, when the module is loaded into the kernel
- */
+/*
+    Diese Funktion wird aufgerufen, wenn das Modul in den Kernel geladen wird,
+    und registriert den Treiber.
+*/
 static int __init monitoring_system_init(void) {
 	printk("monitoring-sys: Loading the driver...\n");
 	if(platform_driver_register(&monitoring_sys_driver)) {
