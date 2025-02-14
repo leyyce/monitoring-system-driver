@@ -1,3 +1,10 @@
+/*
+monitoring_system.c implementiert einen Treiber für unser Monitoring System und dient als Schnittstelle zwischen unserem Userspace-Service und dem Kernel.
+
+Der vom sysmond Service erhaltene Datenframe wird im Kernel mit einem CRC versehen und per Bitbashing über die GPIOs übertragen.
+*/
+
+
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/mod_devicetable.h>
